@@ -3,6 +3,8 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <list>
+#include <thread>
 #include <type_traits>
 #include <utility>
 
@@ -86,19 +88,19 @@ const std::vector<Four> fours = {
       {5, 2, 9, 0, 14, 6, 1, 4, 3, 10, 15, 8, 13, 11, 7, 12, true, 39}
     , {7, 3, 2, 4, 8, 15, 14, 5, 9, 1, 0, 11, 6, 13, 10, 12, true, 38}
     , {7, 15, 6, 2, 1, 5, 3, 4, 9, 14, 8, 11, 13, 10, 0, 12, true, 33}
-      /*
     , {7, 3, 2, 0, 8, 15, 14, 4, 9, 1, 11, 5, 6, 13, 10, 12, true, 41}
     , {5, 3, 2, 6, 7, 11, 1, 0, 8, 4, 14, 13, 10, 9, 15, 12, true, 48}
+    , {10, 8, 12, 3, 0, 1, 14, 5, 2, 4, 6, 9, 13, 11, 7, 15, false, 0}
+    , {1, 12, 0, 9, 6, 3, 13, 10, 11, 15, 7, 14, 5, 4, 8, 2, false, 0}
+      /*
     , {5, 7, 11, 15, 4, 12, 8, 1, 14, 6, 2, 10, 3, 9, 13, 0, true, 54}
     , {3, 11, 13, 8, 15, 1, 9, 0, 6, 2, 12, 7, 10, 14, 5, 4, true, 56}
-    , {10, 8, 12, 3, 0, 1, 14, 5, 2, 4, 6, 9, 13, 11, 7, 15, false, 0}
     , {14, 3, 4, 10, 8, 0, 2, 1, 15, 9, 6, 13, 7, 5, 11, 12, true, 54}
     , {7, 2, 12, 11, 5, 1, 14, 15, 6, 9, 0, 3, 10, 13, 8, 4, true, 44}
     , {6, 7, 14, 0, 5, 1, 13, 11, 10, 8, 4, 12, 3, 9, 15, 2, true, 51}
-    , {1, 12, 0, 9, 6, 3, 13, 10, 11, 15, 7, 14, 5, 4, 8, 2, false, 0}
     , {5, 7, 2, 10, 0, 3, 15, 14, 8, 13, 12, 11, 6, 9, 1, 4, true, 53}
-    , {11, 9, 7, 5, 6, 2, 0, 8, 15, 12, 4, 1, 10, 13, 14, 3, true, 49}
     */
+    , {11, 9, 7, 5, 6, 2, 0, 8, 15, 12, 4, 1, 10, 13, 14, 3, true, 49}
     , {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, true, 0}
 };
 
@@ -237,6 +239,60 @@ TEST(SolverTest, two)
         else {
             EXPECT_EQ(0, solution.moves());
             EXPECT_EQ(solution.begin(), solution.end());
+        }
+    }
+}
+
+TEST(SolverTest, parallel)
+{
+    struct Result
+    {
+        std::size_t moves = 0;
+        std::size_t distance = 0;
+        bool expect_solvable = false;
+        unsigned expected_manhattan = 0;
+        Board start;
+        Board finish;
+    };
+    std::list<Result> results;
+    std::vector<std::thread> threads;
+    threads.reserve(threes.size() + fours.size());
+    std::mutex mutex;
+    const auto process = [&mutex, &results, &threads] (const auto & c) {
+        const auto initial = make_board(c.data);
+        Result res;
+        res.expect_solvable = c.is_solvable;
+        res.expected_manhattan = initial.manhattan();
+        threads.emplace_back([&mutex, &results, res, initial = make_board(c.data)] () mutable {
+                const auto solution = Solver::solve(initial);
+                res.moves = solution.moves();
+                res.distance = std::distance(solution.begin(), solution.end());
+                auto it = solution.begin();
+                res.start = *it;
+                std::advance(it, res.moves);
+                res.finish = *it;
+                std::lock_guard lock(mutex);
+                results.emplace_back(std::move(res));
+            });
+    };
+    for (const auto & c : threes) {
+        process(c);
+    }
+    for (const auto & c : fours) {
+        process(c);
+    }
+    for (auto & t : threads) {
+        t.join();
+    }
+    for (const auto & res : results) {
+        if (res.expect_solvable) {
+            EXPECT_EQ(res.moves, res.distance - 1);
+            EXPECT_TRUE(res.finish.is_goal());
+            EXPECT_EQ(res.expected_manhattan, res.start.manhattan());
+        }
+        else {
+            EXPECT_EQ(0, res.moves);
+            EXPECT_EQ(0, res.distance);
         }
     }
 }
