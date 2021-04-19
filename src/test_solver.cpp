@@ -166,55 +166,55 @@ Board make_goal(const std::size_t n)
 
 TEST(SolverTest, zero)
 {
-    Board board(0);
-    Solver solver(board);
-    EXPECT_EQ(0, solver.moves());
-    auto begin = solver.begin();
-    const auto end = solver.end();
+    const auto board = Board::create_random(0);
+    const auto solution = Solver::solve(board);
+    EXPECT_EQ(0, solution.moves());
+    auto begin = solution.begin();
+    const auto end = solution.end();
     EXPECT_EQ(board, *begin);
     EXPECT_NE(begin, end);
     ++begin;
     EXPECT_EQ(begin, end);
 
     {
-        auto other = solver;
-        EXPECT_EQ(solver.moves(), other.moves());
-        EXPECT_EQ(std::distance(solver.begin(), solver.end()), std::distance(other.begin(), other.end()));
-        EXPECT_EQ(*solver.begin(), *other.begin());
+        const auto other = solution;
+        EXPECT_EQ(solution.moves(), other.moves());
+        EXPECT_EQ(std::distance(solution.begin(), solution.end()), std::distance(other.begin(), other.end()));
+        EXPECT_EQ(*solution.begin(), *other.begin());
     }
     {
-        Solver other(Board(3));
-        other = solver;
-        EXPECT_EQ(solver.moves(), other.moves());
-        EXPECT_EQ(std::distance(solver.begin(), solver.end()), std::distance(other.begin(), other.end()));
-        EXPECT_EQ(*solver.begin(), *other.begin());
+        auto other = Solver::solve(Board::create_random(3));
+        other = solution;
+        EXPECT_EQ(solution.moves(), other.moves());
+        EXPECT_EQ(std::distance(solution.begin(), solution.end()), std::distance(other.begin(), other.end()));
+        EXPECT_EQ(*solution.begin(), *other.begin());
     }
 }
 
 TEST(SolverTest, one)
 {
-    Board board(1);
-    Solver solver(board);
-    EXPECT_EQ(0, solver.moves());
-    auto begin = solver.begin();
-    const auto end = solver.end();
+    const auto board = Board::create_random(1);
+    const auto solution = Solver::solve(board);
+    EXPECT_EQ(0, solution.moves());
+    auto begin = solution.begin();
+    const auto end = solution.end();
     EXPECT_EQ(board, *begin);
     EXPECT_NE(begin, end);
     ++begin;
     EXPECT_EQ(begin, end);
 
     {
-        auto other = solver;
-        EXPECT_EQ(solver.moves(), other.moves());
-        EXPECT_EQ(std::distance(solver.begin(), solver.end()), std::distance(other.begin(), other.end()));
-        EXPECT_EQ(*solver.begin(), *other.begin());
+        auto other = solution;
+        EXPECT_EQ(solution.moves(), other.moves());
+        EXPECT_EQ(std::distance(solution.begin(), solution.end()), std::distance(other.begin(), other.end()));
+        EXPECT_EQ(*solution.begin(), *other.begin());
     }
     {
-        Solver other(Board(3));
-        other = solver;
-        EXPECT_EQ(solver.moves(), other.moves());
-        EXPECT_EQ(std::distance(solver.begin(), solver.end()), std::distance(other.begin(), other.end()));
-        EXPECT_EQ(*solver.begin(), *other.begin());
+        auto other = Solver::solve(Board::create_random(3));
+        other = solution;
+        EXPECT_EQ(solution.moves(), other.moves());
+        EXPECT_EQ(std::distance(solution.begin(), solution.end()), std::distance(other.begin(), other.end()));
+        EXPECT_EQ(*solution.begin(), *other.begin());
     }
 }
 
@@ -222,21 +222,21 @@ TEST(SolverTest, two)
 {
     for (const auto & c : twos) {
         Board initial = make_board(c.data), goal = make_board(c.make_goal());
-        Solver solver(initial);
+        const auto solution = Solver::solve(initial);
         if (c.is_solvable) {
-            EXPECT_EQ(c.moves, solver.moves());
-            auto begin = solver.begin();
-            const auto end = solver.end();
+            EXPECT_EQ(c.moves, solution.moves());
+            auto begin = solution.begin();
+            const auto end = solution.end();
             EXPECT_EQ(c.moves, std::distance(begin, end) - 1);
             EXPECT_EQ(initial, *begin);
-            std::advance(begin, solver.moves());
+            std::advance(begin, solution.moves());
             EXPECT_EQ(goal, *begin);
             ++begin;
             EXPECT_EQ(begin, end);
         }
         else {
-            EXPECT_EQ(0, solver.moves());
-            EXPECT_EQ(solver.begin(), solver.end());
+            EXPECT_EQ(0, solution.moves());
+            EXPECT_EQ(solution.begin(), solution.end());
         }
     }
 }
@@ -245,21 +245,21 @@ TEST(SolverTest, three)
 {
     for (const auto & c : threes) {
         Board initial = make_board(c.data), goal = make_board(c.make_goal());
-        Solver solver(initial);
+        const auto solution = Solver::solve(initial);
         if (c.is_solvable) {
-            //EXPECT_EQ(c.moves, solver.moves());
-            auto begin = solver.begin();
-            const auto end = solver.end();
-            //EXPECT_EQ(c.moves, std::distance(begin, end) - 1);
+            //EXPECT_EQ(c.moves, solution.moves());
+            auto begin = solution.begin();
+            const auto end = solution.end();
+            EXPECT_EQ(solution.moves(), std::distance(begin, end) - 1);
             EXPECT_EQ(initial, *begin);
-            std::advance(begin, solver.moves());
+            std::advance(begin, solution.moves());
             EXPECT_EQ(goal, *begin);
             ++begin;
             EXPECT_EQ(begin, end);
         }
         else {
-            EXPECT_EQ(0, solver.moves());
-            EXPECT_EQ(solver.begin(), solver.end());
+            EXPECT_EQ(0, solution.moves());
+            EXPECT_EQ(solution.begin(), solution.end());
         }
     }
 }
@@ -268,21 +268,21 @@ TEST(SolverTest, four)
 {
     for (const auto & c : fours) {
         Board initial = make_board(c.data), goal = make_board(c.make_goal());
-        Solver solver(initial);
+        const auto solution = Solver::solve(initial);
         if (c.is_solvable) {
-            //EXPECT_EQ(c.moves, solver.moves());
-            auto begin = solver.begin();
-            const auto end = solver.end();
-            //EXPECT_EQ(c.moves, std::distance(begin, end) - 1);
+            //EXPECT_EQ(c.moves, solution.moves());
+            auto begin = solution.begin();
+            const auto end = solution.end();
+            EXPECT_EQ(solution.moves(), std::distance(begin, end) - 1);
             EXPECT_EQ(initial, *begin);
-            std::advance(begin, solver.moves());
+            std::advance(begin, solution.moves());
             EXPECT_EQ(goal, *begin);
             ++begin;
             EXPECT_EQ(begin, end);
         }
         else {
-            EXPECT_EQ(0, solver.moves());
-            EXPECT_EQ(solver.begin(), solver.end());
+            EXPECT_EQ(0, solution.moves());
+            EXPECT_EQ(solution.begin(), solution.end());
         }
     }
 }
@@ -291,7 +291,7 @@ TEST(SolverTest, zero_step)
 {
     for (std::size_t i = 0; i < 199; ++i) {
         const auto goal = make_goal(i);
-        Solver solver(goal);
-        EXPECT_EQ(0, solver.moves());
+        const auto solution = Solver::solve(goal);
+        EXPECT_EQ(0, solution.moves());
     }
 }

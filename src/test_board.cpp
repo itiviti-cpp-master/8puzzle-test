@@ -231,6 +231,7 @@ const std::vector<Nineteen> nineteens = {
 unsigned calc_hamming(const Board & b)
 {
     unsigned hamming = 0, expected = 0;
+    const unsigned i = b.size();
     const unsigned max = i > 0 ? i * i - 1 : 0;
     for (unsigned x = 0; x < i; ++x) {
         for (unsigned y = 0; y < i; ++y) {
@@ -406,44 +407,52 @@ TEST(BoardTest, parallel)
         unsigned n = 0;
         unsigned size = 0;
         unsigned hamming = 0;
+        unsigned expected_hamming = 0;
         unsigned manhattan = 0;
         bool is_goal = false;
         bool is_solvable = false;
     };
-    const unsigned max = 101;
+    const unsigned max = 73;
     const unsigned mul = 5;
-    std::vector<std::thread> threads;
-    std::list<Result> results;
-    threads.reserve(max);
-    std::mutex mutex;
+    std::vector<unsigned> tasks;
+    tasks.reserve(mul * max);
     for (unsigned i = 0; i < mul * max; ++i) {
-        threads.emplace_back([i, &mutex, &results] () {
-                const auto n = i / mul;
-                Board b;
-                {
-                    std::lock_guard lock(mutex);
-                    b = Board::create_random(n);
-                }
-                Result res;
-                res.n = n;
-                res.size = b.size();
-                res.hamming = b.hamming();
-                res.manhattan = b.manhattan();
-                res.is_goal = b.is_goal();
-                res.is_solvable = b.is_solvable();
-                std::lock_guard lock(mutex);
-                results.emplace_back(res);
-            });
+        tasks.push_back(i / mul);
     }
-    for (auto & t : threads) {
-        t.join();
+    std::list<Result> results;
+    std::mutex mutex;
+    const std::size_t thread_num = 32;
+    std::vector<std::thread> threads;
+    threads.reserve(thread_num);
+    std::size_t i = 0;
+    for (unsigned k = 0; k < tasks.size() / thread_num; ++k) {
+        for (std::size_t j = 0; j < thread_num; ++j) {
+            threads.emplace_back([n = tasks[i], &mutex, &results] () {
+                    const auto b = Board::create_random(n);
+                    Result res;
+                    res.n = n;
+                    res.size = b.size();
+                    res.hamming = b.hamming();
+                    res.expected_hamming = calc_hamming(b);
+                    res.manhattan = b.manhattan();
+                    res.is_goal = b.is_goal();
+                    res.is_solvable = b.is_solvable();
+                    // under lock
+                    std::lock_guard lock(mutex);
+                    results.emplace_back(res);
+                });
+            ++i;
+        }
+        for (auto & t : threads) {
+            t.join();
+        }
+        threads.clear();
     }
     std::size_t total_solvable = 0;
     for (const auto & res : results) {
         EXPECT_EQ(res.n, res.size) << "Inconsistent board size";
-        const auto hamming = calc_hamming(b);
-        EXPECT_EQ(hamming, res.hamming) << "For board with size " << res.n;
-        EXPECT_EQ(hamming == 0, res.is_goal) << "For board with size " << res.n;
+        EXPECT_EQ(res.expected_hamming, res.hamming) << "For board with size " << res.n;
+        EXPECT_EQ(res.hamming == 0, res.is_goal) << "For board with size " << res.n;
         EXPECT_EQ(res.is_goal, res.manhattan == 0) << "For board with size " << res.n;
         if (res.is_solvable) {
             ++total_solvable;
