@@ -460,3 +460,40 @@ TEST(BoardTest, parallel)
     }
     EXPECT_GE(total_solvable, mul * 2) << "At least all empty and singleton boards should be solvable";
 }
+
+TEST(BoardTest, parallel_access)
+{
+    struct Result
+    {
+        unsigned expected_hamming = 0;
+        unsigned hamming = 0;
+        unsigned manhattan = 0;
+        bool is_goal = false;
+    };
+    std::list<Result> results;
+    for (int i = 0; i < 10; ++i) {
+        const auto board = Board::create_random(6);
+        std::vector<std::thread> threads;
+        threads.reserve(16);
+        std::mutex mutex;
+        for (int j = 0; j < 16; ++j) {
+            threads.emplace_back([&board, &mutex, &results] () {
+                    Result res;
+                    res.expected_hamming = calc_hamming(board);
+                    res.is_goal = board.is_goal();
+                    res.hamming = board.hamming();
+                    res.manhattan = board.manhattan();
+                    std::lock_guard guard(mutex);
+                    results.emplace_back(res);
+                });
+        }
+        for (auto & t : threads) {
+            t.join();
+        }
+    }
+    for (const auto & res : results) {
+        EXPECT_EQ(res.expected_hamming, res.hamming);
+        EXPECT_EQ(res.is_goal, res.hamming == 0);
+        EXPECT_EQ(res.is_goal, res.manhattan == 0);
+    }
+}
