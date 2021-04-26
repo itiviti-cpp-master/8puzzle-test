@@ -260,10 +260,10 @@ TEST(SolverTest, parallel)
     threads.reserve(threes.size() + fours.size());
     std::mutex mutex;
     const auto process = [&mutex, &results, &threads] (const auto & c) {
-        threads.emplace_back([&mutex, &results, &c, initial = make_board(c.data)] () mutable {
+        threads.emplace_back([&mutex, &results, is_solvable = c.is_solvable, initial = make_board(c.data)] () mutable {
                 const auto solution = Solver::solve(initial);
                 Result res;
-                res.expect_solvable = c.is_solvable;
+                res.expect_solvable = is_solvable;
                 res.expected_manhattan = initial.manhattan();
                 res.moves = solution.moves();
                 res.distance = std::distance(solution.begin(), solution.end());
