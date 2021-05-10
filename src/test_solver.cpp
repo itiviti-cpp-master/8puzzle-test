@@ -14,7 +14,7 @@ namespace {
 template <class T>
 void fill_goal(T & x)
 {
-    if (x.size() > 0) {
+    if (!x.empty()) {
         for (unsigned i = 1; i < x.size(); ++i) {
             x[i-1] = i;
         }
@@ -180,7 +180,7 @@ TEST(SolverTest, zero)
     EXPECT_EQ(begin, end);
 
     {
-        const auto other = solution;
+        const auto other = solution; // NOLINT
         EXPECT_EQ(solution.moves(), other.moves());
         EXPECT_EQ(std::distance(solution.begin(), solution.end()), std::distance(other.begin(), other.end()));
         EXPECT_EQ(*solution.begin(), *other.begin());
@@ -207,7 +207,7 @@ TEST(SolverTest, one)
     EXPECT_EQ(begin, end);
 
     {
-        auto other = solution;
+        auto other = solution; // NOLINT
         EXPECT_EQ(solution.moves(), other.moves());
         EXPECT_EQ(std::distance(solution.begin(), solution.end()), std::distance(other.begin(), other.end()));
         EXPECT_EQ(*solution.begin(), *other.begin());

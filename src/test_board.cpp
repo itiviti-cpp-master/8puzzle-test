@@ -261,7 +261,7 @@ TEST(BoardTest, empty)
     EXPECT_EQ(0, b.manhattan());
     EXPECT_TRUE(b.is_solvable());
     {
-        const auto copy = b;
+        const auto copy = b; // NOLINT
         EXPECT_EQ(b, copy);
         EXPECT_EQ(0, copy.size());
         EXPECT_TRUE(copy.is_goal());
@@ -300,7 +300,7 @@ TEST(BoardTest, singleton)
 TEST(BoardTest, copy)
 {
     const auto b = Board::create_random(3);
-    const auto bb = b;
+    const auto bb = b; // NOLINT
     auto bbb = Board::create_random(11);
     bbb = b;
     EXPECT_EQ(b, bb);
