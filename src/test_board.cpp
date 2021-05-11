@@ -25,7 +25,7 @@ std::ostream & operator << (std::ostream & strm, const Configuration<Size> & con
     for (const auto & row : config.data) {
         strm << "\n\t";
         bool first = true;
-        for (auto x : row) {
+        for (const auto x : row) {
             if (!first) {
                 strm << ' ';
             }
