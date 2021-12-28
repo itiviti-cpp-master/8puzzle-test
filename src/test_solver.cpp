@@ -43,6 +43,7 @@ std::array<unsigned, Size * Size> Configuration<Size>::make_goal()
 using Two = Configuration<2>;
 using Three = Configuration<3>;
 using Four = Configuration<4>;
+using Five = Configuration<5>;
 
 const std::vector<Two> twos = {
       {0, 1, 2, 3, false, 0}
@@ -103,6 +104,10 @@ const std::vector<Four> fours = {
     */
     , {11, 9, 7, 5, 6, 2, 0, 8, 15, 12, 4, 1, 10, 13, 14, 3, true, 49}
     , {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, true, 0}
+};
+
+const std::vector<Five> fives = {
+    {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, true, 1}
 };
 
 constexpr std::size_t isqrt(const std::size_t n)
@@ -325,6 +330,32 @@ TEST(SolverTest, three)
 TEST(SolverTest, four)
 {
     for (const auto & c : fours) {
+        Board initial = make_board(c.data), goal = make_board(c.make_goal());
+        const auto solution = Solver::solve(initial);
+        if (c.is_solvable) {
+            //EXPECT_EQ(c.moves, solution.moves());
+            if (c.moves > 0) {
+                EXPECT_GE(c.moves * 3 / 2, solution.moves()) << "Excessive number of moves";
+            }
+            auto begin = solution.begin();
+            const auto end = solution.end();
+            EXPECT_EQ(solution.moves(), std::distance(begin, end) - 1);
+            EXPECT_EQ(initial, *begin);
+            std::advance(begin, solution.moves());
+            EXPECT_EQ(goal, *begin);
+            ++begin;
+            EXPECT_EQ(begin, end);
+        }
+        else {
+            EXPECT_EQ(0, solution.moves());
+            EXPECT_EQ(solution.begin(), solution.end());
+        }
+    }
+}
+
+TEST(SolverTest, five)
+{
+    for (const auto & c : fives) {
         Board initial = make_board(c.data), goal = make_board(c.make_goal());
         const auto solution = Solver::solve(initial);
         if (c.is_solvable) {
